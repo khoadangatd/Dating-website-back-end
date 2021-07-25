@@ -4,7 +4,8 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var fileUpload= require('express-fileupload')
-
+import LogRocket from 'logrocket';
+LogRocket.init('6phibm/datingapi');
 var usersRouter = require('./routes/users');
 var picturesRouter = require('./routes/pictures');
 var chatsRouter = require('./routes/chats');
