@@ -5,7 +5,6 @@ var randomstring = require("randomstring");
 
 class pictureController {
     uploadImage(req, res, next) {
-        console.log(req.body);
         var pp = req.files.image;
         var fileName = randomstring.generate(10) + '.png';
         pp.mv('public/images/' + fileName, async function (err) {

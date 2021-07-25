@@ -21,18 +21,17 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
-var io = require('socket.io')(server,{
+var io = require('socket.io')(server, {
     cors: {
-      origin: "http://localhost:3000",
-      methods: ["GET", "POST"],
+        origin: "http://localhost:3000",
+        methods: ["GET", "POST"],
     }
-  });
+});
 
-io.use((socket,next)=>{
+io.use((socket, next) => {
     try {
         const token = socket.handshake.query.token;
         jwt.verify(token, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-            
             socket.user = user;
             next();
         })
@@ -42,17 +41,75 @@ io.use((socket,next)=>{
     }
 })
 
-const online=[];
+const AppSocket=require("../app/sockets/appsocket");
+
+const online = [];
 
 io.on('connection', socket => {
-    console.log("connect: "+socket.user._id);
-    online.push(socket.user._id);
-    socket.broadcast.emit('online',online);
-    socket.on('disconnect',()=>{
-        console.log("Disconnected"+ socket.user._id);
-        var index = online.indexOf(socket.user._id);
-        online.splice(index,1);
+    console.log("connect: " + socket.user._id);
+    console.log(socket.user);
+    online.push({
+        _id: socket.user._id,
+        idsocket: socket.id
     });
+    console.log({
+        mess: "người đang onl",
+        online: online
+    });
+    io.emit('online', online);
+    socket.on('disconnect', () => {
+        console.log("Disconnected" + socket.user._id);
+        var index = online.findIndex((user) => user._id === socket.user._id);
+        online.splice(index, 1);
+        io.emit('online', online);
+    });
+    socket.on('like', (data) => {
+        console.log("đang trong trường like")
+        console.log(online);
+        // Thực hiện thay đổi csdl trong trường like khi interact
+        console.log("socket hien tai cua nguoi dung" + socket.id);
+        AppSocket.likeUser(socket.user._id, data._idother)
+        AppSocket.handleMatchUser(socket.user._id, data._idother, data.liked)
+            .then(match => {
+                let other = online.find((user) => {
+                    return user._id == data._idother;
+                })
+                if(!other){
+                    return;
+                }
+                if (match) {
+                    io.to(`${other.idsocket}`).emit('matched', {
+                        message:`Bạn đã kết đôi với ${data.name}`,
+                        id:socket.user._id
+                    });
+                    socket.emit('matched', {
+                        message:"Bạn đã kết đôi",
+                        id:data._idother
+                    });
+                }
+                else {
+                    io.to(`${other.idsocket}`).emit('liked', {
+                        message:"Có người đã thích bạn",
+                        id:socket.user._id
+                    });
+                }
+            })
+    })
+    socket.on('unlike', (_idother) => {
+    });
+    socket.on('sendMessage', (message, _idmatcher) => {
+        let other = online.find((user) => {
+            return user._id == _idmatcher;
+        })
+        AppSocket.sendMessage(message, socket.user._id)
+        if(!other){
+            return;
+        }
+        io.to(`${other.idsocket}`).emit('getMessage', {
+            ...message,
+            sender: socket.user._id
+        })
+    })
 });
 
 /**

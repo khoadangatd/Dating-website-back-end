@@ -3,15 +3,22 @@ var router = express.Router();
 const userController =require('../app/controllers/userController');
 const authenticateToken = require('../middlewares/authenticateToken');
 /* GET users listing. */
-
+router.get('/registerMonth',userController.getUserRegisterbyMonth);
+router.get('/resdetailMonth',userController.getUserDetailbyMonth);
+router.get('/all',authenticateToken,userController.getAllUser);
+router.get('/:_id',authenticateToken,userController.getOther);
+router.get('/',authenticateToken,userController.getUser);
 router.post('/login',userController.login);
 router.post('/refreshToken',userController.refreshToken);
 router.post('/register',userController.register);
 router.post('/loginfb',userController.loginFB);
 router.post('/findUser',authenticateToken,userController.findUser);
-router.get('/login',authenticateToken,userController.getUser);
+router.post('/matchers',authenticateToken,userController.findUserMatch);
+router.post('/likers',authenticateToken,userController.findUserLiked);
+router.put('/disable',authenticateToken,userController.diableUser);
 router.put('/setting',authenticateToken,userController.editSetting);
 router.put('/info',authenticateToken,userController.editInfo);
+router.put('/private',authenticateToken,userController.editPrivate);
 
 // Có vấn đề nên để socket thì hợp lý hơn
 // router.get('/discovery',authenticateToken,userController.findUser);
