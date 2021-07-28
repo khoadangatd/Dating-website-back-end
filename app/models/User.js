@@ -33,6 +33,7 @@ const User = new Schema({
     smoking:{type:String},
     liquor:{type:String},
     disable: { type: Boolean, default: false },
+    credit: { type: Number},
     resetPasswordToken: String,
     resetPasswordExpires: Date
 },

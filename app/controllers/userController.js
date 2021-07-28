@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const { registerValidation } = require("../../auth/RegisterValidation");
 const { privateValidation } = require("../../auth/PrivateValidation");
 const { $where } = require("../models/User");
+const Deal = require("../models/Deal");
 dotenv.config();
 const tokenList = {};
 
@@ -239,14 +240,12 @@ class userController {
         if (req.user.role != 0) return res.status(403).json({ message: "Bạn không có quyền truy cập" })
         var { page, search } = req.query;
         console.log(page, search);
+        const itemInPage = 6;
         try {
             var totalItem = search ?
                 await User.countDocuments({ name: { $regex: '.*' + search + '.*' } }) :
                 await User.countDocuments();
             search = search || "";
-            console.log("search" + search);
-            console.log(totalItem);
-            const itemInPage = 1;
             var totalPage = Math.ceil((totalItem * 1.0) / itemInPage);
             console.log(totalPage);
             const user = await User.find({ name: { $regex: '.*' + search + '.*' } })
@@ -283,6 +282,15 @@ class userController {
         try {
             const totalRes = User.aggregate([
                 {
+                    $match: {
+                        role: { $ne: 0 },
+                        createdAt: {
+                            $gte: new Date(parseInt(req.params.year), 1, 1),
+                            $lt: new Date(parseInt(req.params.year), 12, 30)
+                        }
+                    }
+                },
+                {
                     $group: {
                         _id: {
                             month: {
@@ -301,14 +309,18 @@ class userController {
                         _id: 0,
                         month: "$_id.month",
                         register: "$register",
-                        count: 1
                     }
                 }
             ])
             var ResbyMonth = await totalRes.exec();
-            var total = await User.countDocuments();
+            var total = await User.countDocuments({
+                createdAt: {
+                    $gte: new Date(parseInt(req.params.year), 1, 1),
+                    $lt: new Date(parseInt(req.params.year), 12, 30)
+                }
+            });
             res.status(200).json({
-                total,
+                total: total,
                 ResbyMonth
             })
         }
@@ -322,7 +334,11 @@ class userController {
             const totalResFree = User.aggregate([
                 {
                     $match: {
-                        role: 1
+                        role: 1,
+                        createdAt: {
+                            $gte: new Date(parseInt(req.params.year), 1, 1),
+                            $lt: new Date(parseInt(req.params.year), 12, 30)
+                        }
                     }
                 },
                 {
@@ -344,14 +360,17 @@ class userController {
                         _id: 0,
                         month: "$_id.month",
                         registerFree: "$register",
-                        count: 1
                     }
                 }
             ])
             const totalResPre = User.aggregate([
                 {
                     $match: {
-                        role: 2
+                        role: 2,
+                        createdAt: {
+                            $gte: new Date(parseInt(req.params.year), 1, 1),
+                            $lt: new Date(parseInt(req.params.year), 12, 30)
+                        }
                     }
                 },
                 {
@@ -373,14 +392,25 @@ class userController {
                         _id: 0,
                         month: "$_id.month",
                         registerPremium: "$register",
-                        count: 1
                     }
                 }
             ])
             var UserFrees = await totalResFree.exec();
             var UserPres = await totalResPre.exec();
-            var totalUserFrees = await User.countDocuments({ role: 1 });
-            var totalUserPres = await User.countDocuments({ role: 2 });
+            var totalUserFrees = await User.countDocuments({
+                role: 1,
+                createdAt: {
+                    $gte: new Date(parseInt(req.params.year), 1, 1),
+                    $lt: new Date(parseInt(req.params.year), 12, 30)
+                }
+            });
+            var totalUserPres = await User.countDocuments({
+                role: 2,
+                createdAt: {
+                    $gte: new Date(parseInt(req.params.year), 1, 1),
+                    $lt: new Date(parseInt(req.params.year), 12, 30)
+                }
+            });
             res.status(200).json({
                 totalUserFrees,
                 totalUserPres,
@@ -391,6 +421,10 @@ class userController {
         catch (err) {
             res.status(500).json(err);
         }
+    }
+
+    async upgradePremium(req, res) {
+
     }
 }
 

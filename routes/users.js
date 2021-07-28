@@ -3,8 +3,8 @@ var router = express.Router();
 const userController =require('../app/controllers/userController');
 const authenticateToken = require('../middlewares/authenticateToken');
 /* GET users listing. */
-router.get('/registerMonth',userController.getUserRegisterbyMonth);
-router.get('/resdetailMonth',userController.getUserDetailbyMonth);
+router.get('/registerMonth/:year',userController.getUserRegisterbyMonth);
+router.get('/resdetailMonth/:year',userController.getUserDetailbyMonth);
 router.get('/all',authenticateToken,userController.getAllUser);
 router.get('/:_id',authenticateToken,userController.getOther);
 router.get('/',authenticateToken,userController.getUser);

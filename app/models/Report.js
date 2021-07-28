@@ -11,9 +11,9 @@ const Report = new Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User"
         },
-        reason: [{
-            type: Boolean
-        }],
+        reason: {
+            type: String
+        },
         detail: {
             type: String
         }

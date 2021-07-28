@@ -4,12 +4,11 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var fileUpload= require('express-fileupload')
-import LogRocket from 'logrocket';
-LogRocket.init('6phibm/datingapi');
 var usersRouter = require('./routes/users');
 var picturesRouter = require('./routes/pictures');
 var chatsRouter = require('./routes/chats');
 var repliesRouter = require('./routes/reply');
+var dealsRouter = require('./routes/deals');
 
 const db = require('./config/db');
 
@@ -36,6 +35,7 @@ app.use('/users', usersRouter);
 app.use('/pictures', picturesRouter);
 app.use('/chats', chatsRouter);
 app.use('/replies', repliesRouter);
+app.use('/deals', dealsRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
