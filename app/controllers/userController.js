@@ -7,6 +7,9 @@ const { privateValidation } = require("../../auth/PrivateValidation");
 const { $where } = require("../models/User");
 const Deal = require("../models/Deal");
 dotenv.config();
+var fs = require('fs');
+var randomstring = require("randomstring");
+
 const tokenList = {};
 
 class userController {
@@ -27,8 +30,6 @@ class userController {
             const data = {
                 email: user.email,
                 _id: user._id,//thêm id vào token
-                match: user.match,// thêm id match với người dùng
-                liked: user.liked,// thêm id liked với người dùng
                 role: user.role//Thêm quyền của người dùng
             };
             const accessToken = generateAccessToken(data);
@@ -134,11 +135,13 @@ class userController {
                 gender: genderSetting,
             },
         });
-        user.save()
-            .then((data) => {
-                res.status(200).json({ message: "Đăng ký thành công" });
-            })
-            .catch((error) => res.status(500).json({ message: error }));
+        try {
+            await user.save()
+            res.status(200).json({ message: "Đăng ký thành công" });
+        }
+        catch (error) {
+            res.status(500).json({ message: error });
+        }
     }
     // Đợi facebook xác thực
     async loginFB(req, res, next) {
@@ -201,7 +204,7 @@ class userController {
                     },
                     gender: user.setting.gender,
                     _id: {
-                        $nin: user.unlike, $nin: user.like, $ne: req.user._id
+                        $nin: [...user.unlike, ...user.like], $ne: req.user._id
                     }
                 }, '_id name gender avatar age aboutme job target marriage height smoking liquor city')
                 .limit(5);
@@ -227,7 +230,14 @@ class userController {
     async findUserLiked(req, res, next) {
         try {
             // Lấy dữ liệu liked với người dùng
-            const likers = await User.find({ _id: { $in: req.body.liked } });
+            // Người dùng premium
+            let likers;
+            console.log(req.user.role);
+            if (req.user.role == 2 || req.user.role == 0)
+                likers = await User.find({ _id: { $in: req.body.liked } }, '_id name age city');
+            // Người dùng free
+            else
+                likers = await User.find({ _id: { $in: req.body.liked } }, '-_id name age city');
             res.status(200).json({ message: "Thông tin người dùng đã thích bạn", data: likers });
         }
         catch (error) {
@@ -235,6 +245,20 @@ class userController {
         }
     }
 
+    // Cập nhật ảnh avatar
+    uploadAvatar(req, res, next) {
+        var pp = req.files.image;
+        var fileName = randomstring.generate(10) + '.png';
+        pp.mv('public/images/' + fileName, async function (err) {
+            if (err) {
+                res.json({ message: "Cập nhật avatar thất bại" })
+            }
+            else {
+                await User.updateOne({ _id: req.user._id }, { avatar: fileName });
+                res.status(200).json({ message: "Cập nhật avatar thành công" })
+            }
+        });
+    }
     // ADMIN
     async getAllUser(req, res, next) {
         if (req.user.role != 0) return res.status(403).json({ message: "Bạn không có quyền truy cập" })

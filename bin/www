@@ -47,7 +47,6 @@ const online = [];
 
 io.on('connection', socket => {
     console.log("connect: " + socket.user._id);
-    console.log(socket.user);
     online.push({
         _id: socket.user._id,
         idsocket: socket.id
@@ -74,10 +73,13 @@ io.on('connection', socket => {
                 let other = online.find((user) => {
                     return user._id == data._idother;
                 })
-                if(!other){
-                    return;
-                }
                 if (match) {
+                    // Khi người dùng kia offline thì gửi thông báo
+                    if(!other){
+                        AppSocket.sendNotify(data._idother,"matched",1);
+                        return;
+                    }
+                    // Nếu online thì gửi qua cái toast kết đôi
                     io.to(`${other.idsocket}`).emit('matched', {
                         message:`Bạn đã kết đôi với ${data.name}`,
                         id:socket.user._id
@@ -88,6 +90,12 @@ io.on('connection', socket => {
                     });
                 }
                 else {
+                     // Khi người dùng kia offline thì gửi thông báo
+                    if(!other){
+                        AppSocket.sendNotify(data._idother,"liked",1);
+                        return;
+                    }
+                    // Nếu online thì gửi qua cái toast đã thích
                     io.to(`${other.idsocket}`).emit('liked', {
                         message:"Có người đã thích bạn",
                         id:socket.user._id
@@ -95,7 +103,8 @@ io.on('connection', socket => {
                 }
             })
     })
-    socket.on('unlike', (_idother) => {
+    socket.on('unlike', (data) => {
+        AppSocket.unlikeUser(socket.user._id, data._idother)
     });
     socket.on('sendMessage', (message, _idmatcher) => {
         let other = online.find((user) => {
@@ -103,6 +112,7 @@ io.on('connection', socket => {
         })
         AppSocket.sendMessage(message, socket.user._id)
         if(!other){
+            AppSocket.sendNotify(_idmatcher,"messenger",1);
             return;
         }
         io.to(`${other.idsocket}`).emit('getMessage', {

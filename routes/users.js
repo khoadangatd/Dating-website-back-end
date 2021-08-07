@@ -19,6 +19,7 @@ router.put('/disable',authenticateToken,userController.diableUser);
 router.put('/setting',authenticateToken,userController.editSetting);
 router.put('/info',authenticateToken,userController.editInfo);
 router.put('/private',authenticateToken,userController.editPrivate);
+router.put('/uploadAvatar',authenticateToken,userController.uploadAvatar);
 
 // Có vấn đề nên để socket thì hợp lý hơn
 // router.get('/discovery',authenticateToken,userController.findUser);

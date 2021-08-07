@@ -7,7 +7,7 @@ class dealController {
             const deals = await Deal.find().populate('user').sort({ createdAt: -1 });
             res.status(200).json({
                 message: "Lịch sử giao dịch",
-                deals
+                data:deals
             })
         }
         catch (err) {
@@ -119,11 +119,6 @@ class dealController {
                 const credit = deal.money / 100;
                 await User.updateOne({ _id: deal.user }, { $inc:{credit:credit }});
                 await Deal.updateOne({_id:idOrder},{status:true})
-                // const deal = new Deal({
-                //     user: req.user._id,
-                //     mess: "Mua tiền HP",
-                //     money: form.money
-                // })
                 return res.status(200).json({
                     message: "Giao dịch thành công"
                 });
@@ -137,6 +132,27 @@ class dealController {
             });
         }
     };
+    async upgradePremium(req,res){
+        // Nâng cấp premium tiêu tốn 500 HP
+        if(req.user.role==1){
+            try{
+                const user =await User.findOneAndUpdate({_id:req.user._id},{$inc:{credit:-500,role:2}});
+                if(user.credit<=0){
+                    await User.findOneAndUpdate({_id:req.user._id},{$inc:{credit:+500,role:1}});
+                    return res.status(500).json({
+                        message: "Tài khoản của bạn không đủ HP"
+                    });
+                }
+                return res.status(200).json({
+                    message: "Nâng cấp tài khoản Premium thành công"
+                });
+            }
+            catch{
+
+            }
+        }
+        return res.status(500).json({ message: "Tài khoản của bạn đã premium" })
+    }
 }
 
 function sortObject(o) {

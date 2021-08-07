@@ -7,7 +7,7 @@ const Picture = new Schema(
             type:mongoose.Schema.Types.ObjectId,
             ref:"User"
         },
-        type: { type: String },
+        type: { type: Number},
         src: { type: String },
     },
     {

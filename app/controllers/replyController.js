@@ -1,5 +1,6 @@
 const Report = require('../models/Report');
 const Feedback = require('../models/Feedback');
+const Notification=require('../models/Notification');
 var nodemailer = require('nodemailer');
 
 class replyController {
@@ -112,6 +113,53 @@ class replyController {
             await fb.save();
             res.status(200).json({
                 message: "Đã phản hồi thành công",
+            })
+        }
+        catch (err) {
+            res.status(500).json(err);
+        }
+    }
+
+    async createNotify(req,res){
+        try {
+            const noti = await Notification.findOne({ user: req.user._id, type: req.params.type });
+            if (noti) {
+                await Notification.updateOne({ user: req.user._id, type: req.params.type }, { $inc: { quantity: 1 } });
+            }
+            else {
+                const newNotification = new Notification({
+                    user: req.user._id,
+                    type: req.params.type,
+                    quantity: 1,
+                })
+                await newNotification.save();
+            }
+            res.status(200).json({
+                message:"Đã tạo mới thông báo của người dùng",
+            })
+        }
+        catch (err) {
+            res.status(500).json(err);
+        }
+    }
+
+    async getNotify(req,res){
+        try{
+            const notify=await Notification.find({user:req.user._id});
+            res.status(200).json({
+                message:"Thông báo của người dùng",
+                data:notify
+            })
+        }
+        catch (err) {
+            res.status(500).json(err);
+        }
+    }
+    async deleteNotify(req,res){
+        try{
+            await Notification.deleteOne({user:req.user._id,type:req.params.type});
+            res.status(200).json({
+                message:"Xóa thông báo của người dùng thành công",
             })
         }
         catch (err) {

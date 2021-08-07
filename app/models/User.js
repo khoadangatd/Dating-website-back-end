@@ -20,7 +20,7 @@ const User = new Schema({
         age: [Number],
         gender: { type: String },
     },
-    avatar:{type: String,default: "https://i.stack.imgur.com/l60Hf.png"}, //avatar mặc định
+    avatar:{type: String,default: "avatarDefault.png"}, //avatar mặc định
     unlike: [String],// Dùng để loại bỏ khi hàm Finduser thực hiện không xuất hiện lại
     like: [String],// Dùng để loại bỏ khi hàm Finduser thực hiện không xuất hiện lại
     match: [String],//Khi người dùng nhấn nút like sẽ kiểm tra trong csdl bảng liked có tồn tại _idother( id của người dùng được nhấn)
@@ -33,7 +33,7 @@ const User = new Schema({
     smoking:{type:String},
     liquor:{type:String},
     disable: { type: Boolean, default: false },
-    credit: { type: Number},
+    credit: { type: Number,default:0},
     resetPasswordToken: String,
     resetPasswordExpires: Date
 },
