@@ -6,7 +6,6 @@ const Schema = mongoose.Schema;
 // 2-Người dùng đăng ký gói thành viên
 
 const User = new Schema({
-    idFace: { type: String },
     role: {type:Number,default:1},
     email: { type: String },
     name: { type: String },
@@ -34,6 +33,7 @@ const User = new Schema({
     liquor:{type:String},
     disable: { type: Boolean, default: false },
     credit: { type: Number,default:0},
+    confirmCode:{type:String},
     resetPasswordToken: String,
     resetPasswordExpires: Date
 },
