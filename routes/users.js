@@ -3,11 +3,15 @@ var router = express.Router();
 const userController =require('../app/controllers/userController');
 const authenticateToken = require('../middlewares/authenticateToken');
 /* GET users listing. */
-router.get('/registerMonth/:year',userController.getUserRegisterbyMonth);
-router.get('/resdetailMonth/:year',userController.getUserDetailbyMonth);
+router.get('/registerMonth/:year',authenticateToken,userController.getUserRegisterbyMonth);
+router.get('/resdetailMonth/:year',authenticateToken,userController.getUserDetailbyMonth);
+router.get('/confirmMail/:confirmCode',userController.confirmMail);
+router.get('/totalUser',userController.getTotalUser);
 router.get('/all',authenticateToken,userController.getAllUser);
 router.get('/:_id',authenticateToken,userController.getOther);
 router.get('/',authenticateToken,userController.getUser);
+router.post('/updatePassword/:confirmCode',userController.updatePassword);
+router.post('/forgot',userController.sendMailForgot);
 router.post('/login',userController.login);
 router.post('/refreshToken',userController.refreshToken);
 router.post('/register',userController.register);

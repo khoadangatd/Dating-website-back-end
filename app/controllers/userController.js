@@ -4,11 +4,11 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const { registerValidation } = require("../../auth/RegisterValidation");
 const { privateValidation } = require("../../auth/PrivateValidation");
-const { $where } = require("../models/User");
 const Deal = require("../models/Deal");
 dotenv.config();
 var fs = require('fs');
 var randomstring = require("randomstring");
+var nodemailer = require('nodemailer');
 
 const tokenList = {};
 
@@ -24,9 +24,9 @@ class userController {
             if (user.disable == true) {
                 return res.status(400).json({ message: "Tài khoản của bạn đã bị vô hiệu hóa" });
             }
-            // if(user.authMail==false){
-            //     return res.status(400).json({ message: "Tài khoản chưa xác thực hãy truy cập gmail của bạn" });
-            // }
+            if (user.authMail == false) {
+                return res.status(400).json({ message: "Tài khoản chưa xác thực hãy truy cập gmail của bạn" });
+            }
             const data = {
                 email: user.email,
                 _id: user._id,//thêm id vào token
@@ -128,19 +128,130 @@ class userController {
         req.body.password = Bcrypt.hashSync(req.body.password, 10);
         const formData = req.body;
         const genderSetting = formData.gender == "Nam" ? "Nữ" : "Nam";
+        const confirmCode = randomstring.generate(100);
         const user = new User({
             ...formData,
             setting: {
                 age: [parseInt(formData.age) - 2, parseInt(formData.age) + 2],
                 gender: genderSetting,
             },
+            confirmCode: confirmCode
         });
+        await user.save();
+        let transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'kdangatd@gmail.com',
+                pass: '12345678aA',
+            }
+        });
+        var mailOptions = {
+            from: 'kdangatd@gmail.com',
+            to: formData.email,
+            subject: "Thư xác nhận email của HAPE",
+            html:
+                `<table align="center">
+                    <tbody>
+                        <tr>
+                            <th>
+                                <h1 style="color:rgba(0, 156, 230);font-size:40px">HAPE</h1>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td style="background-color: #c7caf3; padding: 5px 20px; color:black">
+                                <div style="font-size:24px;font-weight:500">Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi</div> 
+                                <div style="font-size:20px">Hãy nhấn vào link dưới đây để xác nhận email của bạn và trải nghiệm nào</div> 
+                                <a href="http://localhost/users/confirmMail/${confirmCode}">Xác nhận email</a> 
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>`
+        }
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                res.status(500).json({ message: "Có lỗi xảy ra" });
+            }
+            else {
+                console.log('Email sent: ' + info.response);
+                res.status(200).json({ message: "Đăng ký thành công" });
+            }
+        });
+    }
+    async confirmMail(req, res, next) {
         try {
-            await user.save()
-            res.status(200).json({ message: "Đăng ký thành công" });
+            const data = await User.findOneAndUpdate({ confirmCode: req.params.confirmCode }, { authMail: true });
+            if (data)
+                res.status(200).json({ message: "Xác nhận email thành công" });
+            else
+                res.status(500).json({ message: "Xác nhận email thất bại" });
         }
         catch (error) {
             res.status(500).json({ message: error });
+        }
+    }
+    async sendMailForgot(req, res, next) {
+        const user = await User.findOne({ email: req.body.email });
+        if (!user) return res.status(500).json({ message: "Không tìm thấy email này" });
+        let transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'kdangatd@gmail.com',
+                pass: '12345678aA',
+            }
+        });
+        var mailOptions = {
+            from: 'kdangatd@gmail.com',
+            to: req.body.email,
+            subject: "Thư phục hồi mật khẩu của bạn",
+            html:
+                `<table align="center">
+                    <tbody>
+                        <tr>
+                            <th>
+                                <h1 style="color:rgba(0, 156, 230);font-size:40px">HAPE</h1>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td style="background-color: #c7caf3; padding: 5px 20px; color:black">
+                                <div style="font-size:24px;font-weight:500">Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi</div> 
+                                <div style="font-size:20px">Hãy nhấn vào link dưới đây để xác nhận email của bạn và trải nghiệm nào</div> 
+                                <form method="POST" action="http://localhost/users/updatePassword/${user.confirmCode}">
+                                    <input placeholder="Nhập mật khẩu mới" name="password">
+                                    <button type="submit">Đổi mật khẩu</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>`
+        }
+        transporter.sendMail(mailOptions, async function (error, info) {
+            if (error) {
+                res.status(500).json({ message: "Có lỗi xảy ra" });
+            }
+            else {
+                console.log('Email sent: ' + info.response);
+                try {
+                    await User.updateOne({ confirmCode: req.params.confirmCode }, { authMail: true });
+                    res.status(200).json({ message: "Gửi thư phục hồi mật khẩu thành công" });
+                }
+                catch (error) {
+                    res.status(500).json({ message: error });
+                }
+            }
+        });
+    }
+    async updatePassword(req, res, next) {
+        try {
+            req.body.password = Bcrypt.hashSync(req.body.password, 10);
+            await User.updateOne({ confirmCode: req.params.confirmCode }, {
+                password: req.body.password
+            })
+            res.json({
+                message: "Khôi phục mật khẩu thành công."
+            })
+        }
+        catch (err) {
+            return res.status(500).json({ messsage: error });
         }
     }
     // Đợi facebook xác thực
@@ -303,6 +414,7 @@ class userController {
     }
 
     async getUserRegisterbyMonth(req, res) {
+        if (req.user.role != 0) return res.status(403).json({ message: "Bạn không có quyền truy cập" })
         try {
             const totalRes = User.aggregate([
                 {
@@ -353,7 +465,20 @@ class userController {
         }
     }
 
+    async getTotalUser(req, res) {
+        try {
+            var total = await User.countDocuments();
+            res.status(200).json({
+                total: total,
+            })
+        }
+        catch (err) {
+            res.status(500).json(err);
+        }
+    }
+
     async getUserDetailbyMonth(req, res) {
+        if (req.user.role != 0) return res.status(403).json({ message: "Bạn không có quyền truy cập" })
         try {
             const totalResFree = User.aggregate([
                 {
@@ -445,10 +570,6 @@ class userController {
         catch (err) {
             res.status(500).json(err);
         }
-    }
-
-    async upgradePremium(req, res) {
-
     }
 }
 
