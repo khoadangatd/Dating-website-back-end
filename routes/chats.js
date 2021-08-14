@@ -7,7 +7,7 @@ const authenticateToken = require('../middlewares/authenticateToken');
 router.get('/message/newest/:idconversation',authenticateToken,chatController.getlastMessage);
 router.get('/conversation/',authenticateToken,chatController.getConversation);
 router.get('/conversation/:idconversation',authenticateToken,chatController.getConversation);
-router.get('/message/:idconversation',authenticateToken,chatController.getMessageConversation);
+router.get('/message/:idconversation/',authenticateToken,chatController.getMessageConversation);
 router.get('/count/:year',chatController.countAllMessage);
 // router.put('/update',settingController.updateSetting);
 

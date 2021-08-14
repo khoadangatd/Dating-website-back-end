@@ -14,6 +14,7 @@ class chatController {
             res.status(500).json(err);
         }
     }
+    
     async getDetailConversation(req, res, next) {
         try {
             const data = await Conversation.findOne({ conversation: req.params.idconversation });
@@ -26,6 +27,7 @@ class chatController {
             res.status(500).json(err);
         }
     }
+
     // Lấy tin nhắn gần nhất trong conversation với người dùng khác.
     getlastMessage(req, res) {
         Message.findOne({ conversation: req.params.idconversation }).sort({ createdAt: -1 })
@@ -35,13 +37,15 @@ class chatController {
             })
             .catch((error) => res.status(500).json(error));
     }
+
     getMessageConversation(req, res) {
-        Message.find({ conversation: req.params.idconversation }).limit(50)
+        Message.find({ conversation: req.params.idconversation })
             .then(data => {
                 res.status(200).json({ message: `Tin nhắn `, data: data });
             })
             .catch((error) => res.status(500).json(error));
     }
+
     countAllMessage(req, res) {
         Message.countDocuments(
             {

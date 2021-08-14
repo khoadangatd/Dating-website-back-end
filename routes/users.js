@@ -19,6 +19,7 @@ router.post('/loginfb',userController.loginFB);
 router.post('/findUser',authenticateToken,userController.findUser);
 router.post('/matchers',authenticateToken,userController.findUserMatch);
 router.post('/likers',authenticateToken,userController.findUserLiked);
+router.post('/logout',authenticateToken,userController.logOutUser);
 router.put('/disable',authenticateToken,userController.diableUser);
 router.put('/setting',authenticateToken,userController.editSetting);
 router.put('/info',authenticateToken,userController.editInfo);

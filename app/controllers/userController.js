@@ -59,6 +59,13 @@ class userController {
             });
         })
     }
+    logOutUser(req,res,next){
+        console.log(req.body.refreshToken);
+        delete tokenList[req.body.refreshToken];
+        res.status(200).json({
+            message: "Đăng xuất thành công"
+        });
+    }
     editSetting(req, res, next) {
         User.updateOne({ _id: req.user._id }, {
             setting: {
@@ -374,7 +381,6 @@ class userController {
     async getAllUser(req, res, next) {
         if (req.user.role != 0) return res.status(403).json({ message: "Bạn không có quyền truy cập" })
         var { page, search } = req.query;
-        console.log(page, search);
         const itemInPage = 6;
         try {
             var totalItem = search ?
@@ -574,7 +580,7 @@ class userController {
 }
 
 function generateAccessToken(payload) {
-    return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1000s' });
+    return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '500s' });
 }
 
 function generateRefreshToken(payload) {
