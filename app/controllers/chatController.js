@@ -39,7 +39,7 @@ class chatController {
     }
 
     getMessageConversation(req, res) {
-        Message.find({ conversation: req.params.idconversation })
+        Message.find({ conversation: req.params.idconversation }).limit(50)
             .then(data => {
                 res.status(200).json({ message: `Tin nhắn `, data: data });
             })

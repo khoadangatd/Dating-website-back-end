@@ -6,7 +6,6 @@ const { registerValidation } = require("../../auth/RegisterValidation");
 const { privateValidation } = require("../../auth/PrivateValidation");
 const Deal = require("../models/Deal");
 dotenv.config();
-var fs = require('fs');
 var randomstring = require("randomstring");
 var nodemailer = require('nodemailer');
 
